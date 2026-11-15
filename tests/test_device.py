@@ -50,21 +50,8 @@ async def test_one_operation_at_a_time_user_deadline(fake_fan, monkeypatch):
         await first
 
 
-async def test_persistent_keeps_link(monkeypatch):
-    from aioatombergfan import device as devmod
-    from tests.conftest import FakeBLEDevice, FakeClient
-
-    client = FakeClient()
-
-    async def _fake(dev, on_disconnect):
-        client._cb = on_disconnect
-        await client.connect()
-        return client
-
-    monkeypatch.setattr(devmod, "_raw_connect", _fake)
-    monkeypatch.setattr(devmod, "CONNECT_SETTLE", 0.0)
-    monkeypatch.setattr(devmod, "IDLE_DISCONNECT", 0.05)
-    fan = devmod.AtombergFan(FakeBLEDevice(), series="R1", persistent=True)
+async def test_persistent_keeps_link(make_fan):
+    fan, _client = make_fan(persistent=True)
     await fan.set_power(True)
     await asyncio.sleep(0.12)
     assert fan.connected  # persistent: no idle disconnect

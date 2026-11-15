@@ -48,19 +48,31 @@ class FakeClient:
 
 
 @pytest.fixture
-def fake_fan(monkeypatch):
-    """Return an AtombergFan wired to a FakeClient, with fast timings."""
+def make_fan(monkeypatch):
+    """Factory: build an AtombergFan wired to a FakeClient, with fast timings.
+
+    Returns a callable ``make(persistent=False) -> (fan, client)``.
+    """
     from aioatombergfan import device as devmod
 
-    client = FakeClient()
+    def _make(persistent: bool = False):
+        client = FakeClient()
 
-    async def _fake_raw_connect(dev, on_disconnect):
-        client._cb = on_disconnect
-        await client.connect()
-        return client
+        async def _fake_raw_connect(dev, on_disconnect):
+            client._cb = on_disconnect
+            await client.connect()
+            return client
 
-    monkeypatch.setattr(devmod, "_raw_connect", _fake_raw_connect)
-    monkeypatch.setattr(devmod, "CONNECT_SETTLE", 0.0)
-    monkeypatch.setattr(devmod, "IDLE_DISCONNECT", 0.05)
-    fan = devmod.AtombergFan(FakeBLEDevice(), series="R1")
-    return fan, client
+        monkeypatch.setattr(devmod, "_raw_connect", _fake_raw_connect)
+        monkeypatch.setattr(devmod, "CONNECT_SETTLE", 0.0)
+        monkeypatch.setattr(devmod, "IDLE_DISCONNECT", 0.05)
+        fan = devmod.AtombergFan(FakeBLEDevice(), series="R1", persistent=persistent)
+        return fan, client
+
+    return _make
+
+
+@pytest.fixture
+def fake_fan(make_fan):
+    """Convenience: a non-persistent fan + client."""
+    return make_fan()
