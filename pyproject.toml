@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aioatombergfan"
+version = "0.1.0"
+description = "Local BLE control for Atomberg smart fans (no cloud)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "LGPL-3.0-or-later"
+dependencies = [
+    "bleak>=0.22",
+    "bleak-retry-connector>=3.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "mypy>=1.8"]
+
+[project.scripts]
+aioatombergfan = "aioatombergfan.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/rgitha/aioatombergfan"
+
+[tool.setuptools.packages.find]
+include = ["aioatombergfan*"]
+
+[tool.setuptools.package-data]
+aioatombergfan = ["py.typed"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
