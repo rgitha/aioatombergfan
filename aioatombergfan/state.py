@@ -68,3 +68,56 @@ def decode_state_string(text: str) -> FanState | None:
     # notification supplies it. (The string carries timer in later fields that
     # we don't rely on here.)
     return _decode_flags(v, 0, series)
+
+
+def _field(parts: list[str], index: int) -> str | None:
+    if index >= len(parts):
+        return None
+    value = parts[index].strip()
+    return value if value and value != "END" else None
+
+
+def _num(parts: list[str], index: int) -> float | None:
+    value = _field(parts, index)
+    try:
+        return float(value) if value is not None else None
+    except ValueError:
+        return None
+
+
+def _int(parts: list[str], index: int) -> int | None:
+    value = _num(parts, index)
+    return int(value) if value is not None else None
+
+
+@dataclass
+class FanDetails:
+    """Extra fields of the state string. Meanings are best guesses,
+    not yet confirmed (see PROTOCOL.md)."""
+
+    raw: str
+    voltage: float | None = None  # field 4: changes with speed
+    rpm: int | None = None  # field 6: changes with speed
+    restarts: int | None = None  # field 9: +1 after a Wi-Fi reset
+    runtime_s: int | None = None  # field 11
+    current: float | None = None  # field 15
+    board_temp: float | None = None  # field 16, degrees C
+    wifi_configured: bool | None = None  # field 17: 0 -> 1 after a credential write
+
+
+def decode_details(text: str) -> FanDetails | None:
+    """Decode the extra fields of the state string; None if it isn't one."""
+    parts = text.split(",")
+    if not parts[0].strip().lstrip("-").isdigit():
+        return None
+    wifi = _int(parts, 17)
+    return FanDetails(
+        raw=text.strip(),
+        voltage=_num(parts, 4),
+        rpm=_int(parts, 6),
+        restarts=_int(parts, 9),
+        runtime_s=_int(parts, 11),
+        current=_num(parts, 15),
+        board_temp=_num(parts, 16),
+        wifi_configured=None if wifi is None else bool(wifi),
+    )

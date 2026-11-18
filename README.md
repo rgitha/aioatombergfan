@@ -19,6 +19,7 @@ aioatombergfan power on|off
 aioatombergfan led on|off
 aioatombergfan sleep on|off
 aioatombergfan timer 0|1|2|3|6      # hours
+aioatombergfan identify             # blink the speed LEDs, then restore them
 aioatombergfan monitor              # stream live state, including remote-control changes
 ```
 Add `--id <device_id>` when more than one fan is in range.
@@ -43,10 +44,11 @@ asyncio.run(main())
 - Commands are plain JSON written to the command characteristic. Each command sets **one**
   setting; the fan ignores a command that carries two. `set_speed` powers the fan on if it
   was off.
-- Live state arrives as notifications on the command characteristic, including changes made
-  with the physical remote. `status` also reads the full state string.
-- Connect-on-demand by default: the link opens for an operation and closes after a short
-  idle period. Pass `persistent=True` for an always-open link and instant state.
+- Connect-on-demand by default: the link opens for an operation, reads the state and closes
+  after a short idle period. It doesn't subscribe to notifications: the fan stops answering
+  subscription requests after a few links that each subscribed, until it's power-cycled.
+- Pass `persistent=True` for an always-open link: it subscribes once, so every change,
+  including those made with the physical remote, arrives at once.
 
 ## Limits
 - **Untested:** whether the fan accepts a second BLE connection while one is open. If your

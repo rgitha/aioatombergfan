@@ -7,6 +7,7 @@
     aioatombergfan led on|off   [--id <device_id>]
     aioatombergfan sleep on|off [--id <device_id>]
     aioatombergfan timer <0|1|2|3|6> [--id <device_id>]
+    aioatombergfan identify [--id <device_id>]   # blink the speed LEDs
     aioatombergfan monitor [--id <device_id>]   # stream live state until Ctrl-C
 
 With one fan in range, --id can be omitted. Needs a BLE adapter.
@@ -78,6 +79,8 @@ async def _run(args: argparse.Namespace) -> int:
             await fan.set_sleep(args.value == "on")
         elif args.cmd == "timer":
             await fan.set_timer_hours(int(args.value))
+        elif args.cmd == "identify":
+            await fan.identify()
         elif args.cmd == "monitor":
             fan.add_callback(lambda s: print(_fmt(s), flush=True))
             print(_fmt(fan.state), flush=True)
@@ -98,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("scan")
     sub.add_parser("status")
     sub.add_parser("monitor")
+    sub.add_parser("identify")
     for name in ("power", "led", "sleep"):
         sp = sub.add_parser(name)
         sp.add_argument("value", choices=["on", "off"])

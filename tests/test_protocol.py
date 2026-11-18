@@ -58,3 +58,23 @@ def test_command_validation():
 def test_timer_map_matches_captures():
     # command value 4 == 6 hours (captured 14-00-06)
     assert TIMER_HOURS_TO_VALUE[6] == 4
+
+
+def test_decode_details():
+    from aioatombergfan import decode_details
+
+    d = decode_details(
+        "20,1,Z,10,158.80,159,240,R1,565,4,725,11541641,156802869,27979229,0,0.93,24.00,1,"
+        "77142859,0,0,0,323,0,321,END"
+    )
+    assert d is not None
+    assert (d.voltage, d.rpm, d.restarts, d.runtime_s, d.current, d.board_temp, d.wifi_configured) == (
+        158.8, 240, 4, 11541641, 0.93, 24.0, True)
+
+
+def test_decode_details_short_and_bad():
+    from aioatombergfan import decode_details
+
+    d = decode_details("20,1,Z,10,82.82,159,114,R1,END")
+    assert d is not None and d.rpm == 114 and d.runtime_s is None and d.wifi_configured is None
+    assert decode_details("error") is None
